@@ -14,7 +14,10 @@ button { font-family: inherit; cursor: pointer; }
   position: fixed; inset: 0; z-index: 2000; background: #000;
   display: flex; align-items: center; justify-content: center;
   color: #fff; transition: opacity .35s;
+  /* CSS fallback fade: fires even if JS timers are throttled in a background tab. */
+  animation: bootfade .5s ease 2.4s forwards;
 }
+@keyframes bootfade { to { opacity: 0; visibility: hidden; } }
 #boot.gone { opacity: 0; pointer-events: none; }
 .boot-inner { text-align: center; }
 .boot-logo { font-size: 44px; font-weight: bold; letter-spacing: 1px; }
