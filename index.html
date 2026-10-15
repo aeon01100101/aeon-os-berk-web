@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aeon OS Berk — Web Demo</title>
+<meta name="description" content="Try Aeon OS Berk in your browser: a Windows XP-style, 1st-grader-simple Linux desktop. Live web demo.">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%232e7a2c'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>B</text></svg>">
+</head>
+<body>
+
+<!-- Boot splash -->
+<div id="boot">
+  <div class="boot-inner">
+    <div class="boot-logo">Aeon OS <span>Berk</span></div>
+    <div class="boot-bar"><div class="boot-fill"></div></div>
+    <div class="boot-hint">starting up… (click to skip)</div>
+  </div>
+</div>
+
+<!-- Desktop -->
+<div id="desktop">
+  <div id="icons">
+    <button class="dicon" data-app="store">
+      <span class="ic" style="--c:#ff783c">▣</span><span class="dicon-label">Aeon Store</span>
+    </button>
+    <button class="dicon" data-app="dos">
+      <span class="ic" style="--c:#141414">&gt;_</span><span class="dicon-label">D0S</span>
+    </button>
+    <button class="dicon" data-app="files">
+      <span class="ic" style="--c:#f2b90d">▤</span><span class="dicon-label">Files</span>
+    </button>
+    <button class="dicon" data-app="about">
+      <span class="ic" style="--c:#2b9bf6">B</span><span class="dicon-label">This PC</span>
+    </button>
+  </div>
+
+  <div id="windows"></div>
+
+  <!-- Start menu -->
+  <div id="startmenu" hidden>
+    <div class="sm-header">
+      <div class="sm-avatar">B</div>
+      <div>
+        <div class="sm-user">Berk</div>
+        <div class="sm-sub">Aeon OS 1.0.1</div>
+      </div>
+    </div>
+    <div class="sm-body">
+      <div class="sm-left">
+        <button class="sm-app" data-app="internet"><span class="ic" style="--c:#2b9bf6">W</span>Internet</button>
+        <button class="sm-app" data-app="music"><span class="ic" style="--c:#ba55d3">♪</span>Music</button>
+        <button class="sm-app" data-app="pictures"><span class="ic" style="--c:#ffb428">▦</span>Pictures</button>
+        <button class="sm-app" data-app="games"><span class="ic" style="--c:#50c85a">▶</span>Games</button>
+        <button class="sm-app" data-app="store"><span class="ic" style="--c:#ff783c">▣</span>Aeon Store</button>
+        <button class="sm-app" data-app="dos"><span class="ic" style="--c:#141414">&gt;_</span>D0S</button>
+      </div>
+      <div class="sm-right">
+        <button class="sm-cat" data-app="files">Files</button>
+        <button class="sm-cat" data-app="write">Write</button>
+        <button class="sm-cat" data-app="tv">TV</button>
+        <button class="sm-cat" data-app="updates">Updates</button>
+        <button class="sm-cat" data-app="about">This PC</button>
+      </div>
+    </div>
+    <div class="sm-footer">
+      <span class="sm-foot-note">The simple, safe computer.</span>
+      <button id="shutdownbtn">⏻ Shut Down</button>
+    </div>
+  </div>
+
+  <div id="balloon" hidden></div>
+</div>
+
+<!-- Taskbar -->
+<div id="taskbar">
+  <button id="startbtn"><span class="start-orb">●</span> start</button>
+  <div id="taskbuttons"></div>
+  <div id="tray"><span id="clock">--:--</span></div>
+</div>
+
+<!-- Shutdown screen -->
+<div id="shutdown" hidden>
+  <div class="sd-inner">
+    <div class="sd-title">Aeon OS Berk</div>
+    <p>Thanks for trying the demo!</p>
+    <p class="sd-small">The real thing is a free download — a whole computer system,<br>simple enough for a 1st grader, safe by design.</p>
+    <a class="sd-link" href="https://archive.org/details/aeon-os-berk-1.0.1" target="_blank" rel="noopener">Download Aeon OS Berk 1.0.1</a>
+    <button id="powerbtn">⏻ Turn back on</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
