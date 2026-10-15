@@ -3,6 +3,38 @@
 const $ = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 
+/* ================= the Berk hard drive =================
+   The demo's "hard drive" lives in the visitor's own browser storage.
+   Cookies are far too tiny to hold files, so the drive uses the
+   browser's built-in storage box (localStorage) — same idea, bigger
+   box. Everything stays on this machine; nothing is uploaded.
+   Clearing the browser's site data wipes the drive. */
+const Drive = {
+  KEY: "berk-drive-v1",
+  data: {},
+  ok: true,
+  load() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      this.data = raw ? JSON.parse(raw) : {};
+    } catch (e) { this.data = {}; this.ok = false; }
+    if (!this.data || typeof this.data !== "object" || Array.isArray(this.data)) this.data = {};
+    this.data.visits = (this.data.visits || 0) + 1;
+    this.save();
+  },
+  save() {
+    try { localStorage.setItem(this.KEY, JSON.stringify(this.data)); }
+    catch (e) { this.ok = false; }
+  },
+  get(k, dflt) { return this.data[k] !== undefined ? this.data[k] : dflt; },
+  set(k, v) { this.data[k] = v; this.save(); },
+  bytes() {
+    try { return (localStorage.getItem(this.KEY) || "").length; } catch (e) { return 0; }
+  },
+};
+Drive.load();
+let pendingWrite = null; // a file the Files app asked Write to open
+
 /* ================= window manager ================= */
 const windowsEl = $("#windows");
 const taskEl = $("#taskbuttons");
@@ -192,7 +224,13 @@ const boot = $("#boot");
 function endBoot() {
   if (boot.classList.contains("gone")) return;
   boot.classList.add("gone");
-  setTimeout(() => balloon("Welcome to Aeon OS Berk!", "Tap <b>start</b> to see your apps, or double-tap a picture on the desktop. This is a web demo of the real system."), 500);
+  setTimeout(() => {
+    if (Drive.get("visits", 1) > 1) {
+      balloon("Welcome back!", "Your Berk drive remembered everything — your saved writing, your apps, and your block world are right where you left them.");
+    } else {
+      balloon("Welcome to Aeon OS Berk!", "Tap <b>start</b> to see your apps, or double-tap a picture on the desktop. This demo has a little hard drive in your browser — what you save, stays saved.");
+    }
+  }, 500);
 }
 boot.addEventListener("click", endBoot);
 setTimeout(endBoot, 1400);
@@ -229,6 +267,7 @@ store: {
       const bar = $(".store-bar", card);
       const fill = $("i", bar);
       let state = item.state;
+      if (state === "get" && Drive.get("installed", []).includes(item.id)) state = "open";
       function paint() { btn.textContent = state === "open" ? "Open" : "Get"; }
       paint();
       btn.addEventListener("click", () => {
@@ -238,7 +277,12 @@ store: {
         let p = 0;
         const iv = setInterval(() => {
           p += 14 + Math.random() * 16;
-          if (p >= 100) { p = 100; clearInterval(iv); state = "open"; btn.disabled = false; paint(); balloon("All done!", "<b>" + item.name + "</b> is ready to use."); }
+          if (p >= 100) {
+            p = 100; clearInterval(iv); state = "open"; btn.disabled = false; paint();
+            const got = Drive.get("installed", []);
+            if (!got.includes(item.id)) { got.push(item.id); Drive.set("installed", got); }
+            balloon("All done!", "<b>" + item.name + "</b> is ready to use — and saved on your drive.");
+          }
           fill.style.width = p + "%";
         }, 130);
       });
@@ -429,12 +473,30 @@ files: {
       $$("button", side).forEach((b) => b.classList.toggle("here", b.dataset.place === here));
       crumbs.textContent = "You are here: " + here;
       list.innerHTML = "";
-      (tree[here] || []).forEach((f) => {
+      const saved = Drive.get("userFiles", {});
+      const mine = Object.keys(saved)
+        .filter((k) => k.startsWith(here + "/"))
+        .map((k) => ({ n: k.slice(here.length + 1), folder: false, user: true }));
+      (tree[here] || []).concat(mine).forEach((f) => {
         const row = document.createElement("button");
         row.className = "frow";
-        row.innerHTML = '<span class="ic" style="--c:' + (f.folder ? "#f2b90d" : "#90a4ae") + '">' + (f.folder ? "▤" : "▢") + "</span>" + f.n;
-        row.addEventListener("click", () => {
+        row.innerHTML = '<span class="ic" style="--c:' + (f.folder ? "#f2b90d" : f.user ? "#5c6bc0" : "#90a4ae") + '">' + (f.folder ? "▤" : "▢") + "</span>" +
+          '<span style="flex:1">' + f.n + "</span>" + (f.user ? '<span class="fdel" title="Delete this file">✕</span>' : "");
+        row.addEventListener("click", (e) => {
+          if (e.target.classList.contains("fdel")) {
+            const all = Drive.get("userFiles", {});
+            delete all[here + "/" + f.n];
+            Drive.set("userFiles", all);
+            balloon("Deleted", "<b>" + f.n + "</b> is gone from your drive.");
+            draw();
+            return;
+          }
           if (f.folder) { here = f.n; draw(); }
+          else if (f.user) {
+            pendingWrite = { name: f.n, folder: here, content: Drive.get("userFiles", {})[here + "/" + f.n] || "" };
+            if (openWins.has("write")) closeWin("write");
+            openApp("write");
+          }
           else balloon(f.n, "On the real Berk, this opens in the right app. In the demo, just imagine it's wonderful.");
         });
         list.appendChild(row);
@@ -459,6 +521,8 @@ games: {
     const ctx = cv.getContext("2d");
     const CELL = 16, COLS = 28, ROWS = 18;
     const blocks = new Map();
+    (Drive.get("craft", []) || []).forEach(([k, c]) => blocks.set(k, c));
+    function saveCraft() { Drive.set("craft", Array.from(blocks.entries())); }
     const colors = [
       ["Grass", "#58a83c"], ["Dirt", "#8a5a2b"], ["Stone", "#8d8d8d"], ["Wood", "#b5651d"],
       ["Leaves", "#3f7d2c"], ["Sand", "#e0cf9e"], ["Water", "#3f76e4"], ["Brick", "#a94438"],
@@ -503,13 +567,14 @@ games: {
       const y = Math.floor((e.clientY - r.top) / r.height * ROWS);
       if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return;
       blocks.set(x + "," + y, current);
+      saveCraft();
       draw();
     }
     cv.addEventListener("pointerdown", (e) => { painting = true; paint(e); });
     cv.addEventListener("pointermove", (e) => { if (painting) paint(e); });
     document.addEventListener("pointerup", () => { painting = false; });
-    $("#clearcraft", body).addEventListener("click", () => { blocks.clear(); ground(); draw(); });
-    ground();
+    $("#clearcraft", body).addEventListener("click", () => { blocks.clear(); ground(); saveCraft(); draw(); });
+    if (blocks.size === 0) ground();
     draw();
   }
 },
@@ -559,11 +624,23 @@ internet: {
 write: {
   title: "Write", glyph: "✎", color: "#5c6bc0", w: 540, h: 420,
   render(body) {
+    const file = pendingWrite || {
+      name: "My Letter.txt", folder: "Documents",
+      content: Drive.get("userFiles", {})["Documents/My Letter.txt"] ||
+        "Dear friend,\n\nToday I tried Aeon OS Berk in my browser. It was easy!\n\n",
+    };
+    pendingWrite = null;
     body.innerHTML =
-      '<div class="web-bar"><b style="align-self:center">My Letter</b><span style="flex:1"></span><button class="btn" id="savewrite">Save</button></div>' +
-      '<textarea class="write-area" placeholder="Start writing here…">Dear friend,\n\nToday I tried Aeon OS Berk in my browser. It was easy!\n\n</textarea>';
+      '<div class="web-bar"><b style="align-self:center">' + file.name.replace(/\.txt$/i, "") + '</b><span style="flex:1"></span><button class="btn" id="savewrite">Save to My Drive</button></div>' +
+      '<textarea class="write-area" placeholder="Start writing here…"></textarea>' +
+      '<div class="pad tiny" style="padding-top:8px">Saved writing lives on your Berk drive, in <b>Files → ' + file.folder + '</b> — close this page, come back later, and it is still here.</div>';
+    const ta = $(".write-area", body);
+    ta.value = file.content;
     $("#savewrite", body).addEventListener("click", () => {
-      balloon("Saved!", "Your writing is safe. (Demo — nothing leaves this page.)");
+      const all = Drive.get("userFiles", {});
+      all[file.folder + "/" + file.name] = ta.value;
+      Drive.set("userFiles", all);
+      balloon("Saved to your drive!", "<b>" + file.name + "</b> is on your Berk drive now. It will still be here next visit.");
     });
   }
 },
@@ -604,6 +681,9 @@ about: {
       "<b>App store:</b> the Aeon Store, and only the Aeon Store<br>" +
       "<b>Terminal:</b> D0S, friendly since forever<br>" +
       "<b>Safety:</b> firewall on, updates automatic, downloads checked<br>" +
+      "<b>Hard drive:</b> " + (Drive.ok
+        ? Math.max(1, Math.round(Drive.bytes() / 102.4)) / 10 + " KB used of 5,000 KB — it lives in this web browser, on this machine only. Nothing is uploaded anywhere. (Cookies were too tiny, so Berk keeps its drive in the browser's bigger storage box.)"
+        : "Off — this browser would not let Berk keep a drive here (a private window, maybe?). Everything still works; it just won't remember.") + "<br>" +
       "</div>" +
       '<p style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">' +
       '<a class="btn primary" href="https://archive.org/details/aeon-os-berk-1.0.1" target="_blank" rel="noopener">Download the real Berk (free)</a>' +

@@ -229,6 +229,11 @@ button { font-family: inherit; cursor: pointer; }
 .frow { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 4px; font-size: 14.5px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; color: #1c1c1c; }
 .frow:hover { background: #e8f0fd; }
 .frow .ic { width: 30px; height: 30px; font-size: 15px; border-radius: 6px; }
+.frow .fdel {
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  background: #ef9a9a; color: #7f0000; font-size: 13px; font-weight: 900; flex: none;
+}
+.frow .fdel:hover { background: #e57373; color: #fff; }
 
 /* games */
 .game-tabs { display: flex; gap: 8px; padding: 12px 14px 0; }

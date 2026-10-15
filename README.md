@@ -14,6 +14,12 @@ No install, no downloads — just open the page and poke around the desktop.
 - **Music, Pictures, Files, TV, Write, Updates** — little working demos
 - **Games** — paint a tiny block world in the AeonCraft demo
 - Shut it down from the start menu… then turn it back on
+- **It remembers you!** The demo has a little hard drive inside your browser:
+  letters you save in Write, apps you get in the Store, and your AeonCraft
+  world are all still there when you come back. The drive lives only on your
+  machine — nothing is uploaded anywhere (This PC shows how full it is).
+  Cookies were too tiny to hold files, so the drive uses the browser's
+  bigger built-in storage box — same idea.
 
 ## What this is (and isn't)
 
